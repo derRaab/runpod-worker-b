@@ -52,7 +52,7 @@ def handler(job):
 
     subprocess.run(f"""accelerate launch --num_cpu_threads_per_process 1 train_network.py \
                          --enable_bucket \
-                         --pretrained_model_name_or_path="/model_cache/v1-5-pruned.safetensors" \
+                         --pretrained_model_name_or_path="/model_cache/sd_xl_base_1.0.safetensors" \
                          --train_data_dir="./training/img" \
                          --resolution=512,512 \
                          --network_alpha=1 \
