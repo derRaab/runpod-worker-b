@@ -50,32 +50,56 @@ def handler(job):
                     flat_directory
                 )
 
-    subprocess.run(f"""accelerate launch --num_cpu_threads_per_process 1 sdxl_train_network.py \
-                         --enable_bucket \
-                         --pretrained_model_name_or_path="/model_cache/sd_xl_base_1.0.safetensors" \
-                         --train_data_dir="./training/img" \
-                         --resolution=512,512 \
-                         --network_alpha=1 \
-                         --text_encoder_lr=5e-05 \
-                         --unet_lr={job_input['unet_lr']} \
-                         --network_dim={job_input['network_dim']} \
-                         --lr_scheduler={job_input['lr_scheduler']} \
-                         --learning_rate={job_input['learning_rate']} \
-                         --lr_scheduler_num_cycles={job_input['lr_scheduler_num_cycles']} \
-                         --lr_warmup_steps={job_input['lr_warmup_steps']} \
-                         --train_batch_size={job_input['train_batch_size']} \
-                         --max_train_steps={job_input['max_train_steps']} \
-                         --output_dir="./training/model" \
-                         --output_name={job['id']} \
-                         --mixed_precision={job_input['mixed_precision']} \
-                         --save_precision={job_input['save_precision']} \
-                         --max_data_loader_n_workers={job_input['max_data_loader_num_workers']} \
-                         --save_model_as=safetensors \
-                         --network_module=networks.lora \
-                         --cache_latents --bucket_reso_steps=64 --bucket_no_upscale""", shell=True, check=True)
+                # Input with default values
+                learning_rate = job_input.get('learning_rate', "4e-07")
+                lr_scheduler = job_input.get('lr_scheduler', "constant")
+                lr_scheduler_num_cycles = job_input.get('lr_scheduler_num_cycles', 2)
+                max_data_loader_n_workers = job_input.get('max_data_loader_num_workers', 0)
+                max_train_steps = job_input.get('max_train_steps', 1000)
+                mixed_precision = job_input.get('mixed_precision', "fp16")
+                network_dim = job_input.get('network_dim', 16)
+                optimizer_type = job_input.get('optimizer_type', "Adafactor")
+                output_name = job_input.get('id', "a-traing-specific-name")
+                save_precision = job_input.get('save_precision', "fp16")
+                train_batch_size = job_input.get('train_batch_size', 1)
+                unet_lr = job_input.get('unet_lr', 0.0001)
 
+                # Accelerate launch arguments https://huggingface.co/docs/accelerate/package_reference/cli#accelerate-launch
+                args = []
+                args.append('--num_cpu_threads_per_process="2"')
+                args.append('./sdxl_train_network.py')
 
-# --optimizer_type = {job_input['optimizer_type']} \
+                args.append('--bucket_no_upscale')
+                args.append('--bucket_reso_steps=64')
+                args.append('--cache_latents')
+                args.append('--keep_tokens="20"')
+                args.append('--learning_rate="' + str(learning_rate) + '"')
+                args.append('--lr_scheduler_num_cycles="' + str(lr_scheduler_num_cycles) + '"')
+                args.append('--lr_scheduler="' + str(lr_scheduler) + '"')
+                args.append('--max_data_loader_n_workers="' + str(max_data_loader_n_workers) + '"')
+                args.append('--max_train_steps="' + str(max_train_steps) + '"')
+                args.append('--mixed_precision="' + str(mixed_precision) + '"')
+                args.append('--network_alpha="8"')
+                args.append('--network_dim="' + str(network_dim) + '"')
+                args.append('--network_module=networks.lora')
+                args.append('--network_train_unet_only')
+                args.append('--no_half_vae')
+                args.append('--noise_offset=0.1')
+                args.append('--optimizer_type="' + str(optimizer_type) + '"')
+                args.append('--output_dir="./training/model"')
+                args.append('--output_name="' + str(output_name) + '"')
+                args.append('--pretrained_model_name_or_path="/model_cache/sd_xl_base_1.0.safetensors"')
+                args.append('--resolution="1024,1024"')
+                args.append('--save_every_n_epochs="1"')
+                args.append('--save_model_as=safetensors')
+                args.append('--save_precision="' + str(save_precision) + '"')
+                args.append('--text_encoder_lr=5e-05')
+                args.append('--train_batch_size="' + str(train_batch_size) + '"')
+                args.append('--train_data_dir="./training/img"')
+                args.append('--unet_lr="' + str(unet_lr) + '"')
+                args.append('--xformers')
+
+                subprocess.run(f"""accelerate launch {' '.join(args)}""", shell=True, check=True)
 
     job_s3_config = job.get('s3Config')
 
