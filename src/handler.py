@@ -74,6 +74,7 @@ def handler(job):
                 args.append('--cache_latents')
                 args.append('--keep_tokens="20"')
                 args.append('--learning_rate="' + str(learning_rate) + '"')
+                args.append('--logging_dir="./training/logs"')
                 args.append('--lr_scheduler_num_cycles="' + str(lr_scheduler_num_cycles) + '"')
                 args.append('--lr_scheduler="' + str(lr_scheduler) + '"')
                 args.append('--max_data_loader_n_workers="' + str(max_data_loader_n_workers) + '"')
