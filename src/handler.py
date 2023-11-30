@@ -15,6 +15,10 @@ from rp_schema import INPUT_SCHEMA
 
 def handler(job):
 
+    # Clear content directories from previous runs
+    shutil.rmtree('./job_files', ignore_errors=True)
+    shutil.rmtree('./training', ignore_errors=True)
+
     job_input = job['input']
 
     if 'errors' in (job_input := validate(job_input, INPUT_SCHEMA)):
