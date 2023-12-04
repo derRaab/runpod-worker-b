@@ -71,7 +71,7 @@ def handler(job):
     mc_args.append('--caption_extension=".txt" ".' + flat_directory + '"')
     mc_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
 
-    make_captions_command = 'python ./finetune/make_captions.py ' + ' '.join(mc_args)
+    make_captions_command = 'python3 ./finetune/make_captions.py ' + ' '.join(mc_args)
     
     if (runs_in_sd_scripts):
         print(make_captions_command + " ALREADY in sd-scripts")
