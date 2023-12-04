@@ -68,7 +68,20 @@ def handler(job):
     mc_args.append('--caption_extension=".txt" ".' + flat_directory + '"')
     mc_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
 
-    subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True,cwd='./sd-scripts')
+
+    print('os.getcwd():' + os.getcwd())
+    if (os.path.exists('./sd-scripts')):
+        print('./sd-scripts exists so use option A')
+        subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True,cwd='./sd-scripts')
+    elif (os.path.exists('../sd-scripts')): 
+        print('../sd-scripts exists so use option B')
+        subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True)
+    else:
+        print('neither ./sd-scripts nor ../sd-scripts exists so use option C')
+        subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True)
+        
+
+    # subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True,cwd='./sd-scripts')
     print(mc_args)
     #return {"error": "error"}
 
