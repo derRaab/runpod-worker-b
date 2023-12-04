@@ -3,6 +3,7 @@ INPUT_SCHEMA = {
         'type': str,
         'required': True
     },
+
     'instance_name': {
         'type': str,
         'required': True
@@ -11,30 +12,38 @@ INPUT_SCHEMA = {
         'type': str,
         'required': True
     },
+
+    # https://github.com/bmaltais/kohya_ss/wiki/LoRA-training-parameters#unet-learning-rate
     'unet_lr': {
         'type': float,
         'required': False,
         'default': 0.0001
     },
+
+    # https://github.com/bmaltais/kohya_ss/wiki/LoRA-training-parameters#network-rank-dimension
+    # https://github.com/bmaltais/kohya_ss/blob/master/train_network_README.md#options-for-learning-lora
     'network_dim': {
         'type': int,
         'required': False,
-        'default': 256
+        'default': 2
     },
+
     'lr_scheduler_num_cycles': {
         'type': int,
         'required': False,
         'default': 1
     },
+
+
     'learning_rate': {
         'type': float,
         'required': False,
-        'default': 0.0001
+        'default': 0.0000004
     },
     'lr_scheduler': {
         'type': str,
         'required': False,
-        'default': 'cosine'
+        'default': 'constant'
     },
     'lr_warmup_steps': {
         'type': int,
@@ -49,7 +58,7 @@ INPUT_SCHEMA = {
     'max_train_steps': {
         'type': int,
         'required': False,
-        'default': 1250
+        'default': 1
     },
     'mixed_precision': {
         'type': str,
@@ -64,7 +73,7 @@ INPUT_SCHEMA = {
     'optimizer_type': {
         'type': str,
         'required': False,
-        'default': 'AdamW8bit'
+        'default': 'Adafactor'
     },
     'max_data_loader_num_workers': {
         'type': int,
@@ -74,6 +83,11 @@ INPUT_SCHEMA = {
     'steps': {
         'type': int,
         'required': False,
-        'default': 125
-    }
+        'default': 1
+    },
+    'num_cpu_threads_per_process': {
+        'type': int,
+        'required': False,
+        'default': 0
+    },
 }
