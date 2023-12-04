@@ -56,7 +56,10 @@ def handler(job):
                     flat_directory
                 )
 
-    print(flat_directory)
+    runs_in_sd_scripts = False
+    cwd  = os.getcwd()
+    if 'sd-scripts' in cwd:
+        runs_in_sd_scripts = True
 
     mc_args = []
     mc_args.append('--batch_size="1"')
@@ -68,21 +71,18 @@ def handler(job):
     mc_args.append('--caption_extension=".txt" ".' + flat_directory + '"')
     mc_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
 
-
-    print('os.getcwd():' + os.getcwd())
-    if (os.path.exists('./sd-scripts')):
-        print('./sd-scripts exists so use option A')
-        subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True,cwd='./sd-scripts')
-    elif (os.path.exists('../sd-scripts')): 
-        print('../sd-scripts exists so use option B')
-        subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True)
+    make_captions_command = 'python ./finetune/make_captions.py ' + ' '.join(mc_args)
+    
+    if (runs_in_sd_scripts):
+        print(make_captions_command + " ALREADY in sd-scripts")
+        subprocess.run(make_captions_command, shell=True, check=True)
     else:
-        print('neither ./sd-scripts nor ../sd-scripts exists so use option C')
-        subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True)
-        
+        print(make_captions_command + " in sd-scripts")
+        subprocess.run(make_captions_command, shell=True, check=True,cwd='./sd-scripts')
+
 
     # subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True,cwd='./sd-scripts')
-    print(mc_args)
+    # print(mc_args)
     #return {"error": "error"}
 
 
@@ -106,31 +106,31 @@ def handler(job):
     args.append('--bucket_reso_steps=64')
     args.append('--cache_latents')
     args.append('--keep_tokens="20"')
-    args.append('--learning_rate="' + job_input['learning_rate'] + '"')
+    args.append('--learning_rate="' + str(job_input['learning_rate']) + '"')
     args.append('--logging_dir="./training/logs"')
-    args.append('--lr_scheduler_num_cycles="' + job_input['lr_scheduler_num_cycles'] + '"')
+    args.append('--lr_scheduler_num_cycles="' + str(job_input['lr_scheduler_num_cycles']) + '"')
     args.append('--lr_scheduler="' + job_input['lr_scheduler'] + '"')
-    args.append('--max_data_loader_n_workers="' + job_input['max_data_loader_n_workers'] + '"')
-    args.append('--max_train_steps="' + job_input['max_train_steps'] + '"')
+    # args.append('--max_data_loader_n_workers="' + job_input['max_data_loader_n_workers'] + '"')
+    args.append('--max_train_steps="' + str(job_input['max_train_steps']) + '"')
     args.append('--mixed_precision="' + job_input['mixed_precision'] + '"')
     args.append('--network_alpha="8"')
-    args.append('--network_dim="' + job_input['network_dim'] + '"')
+    args.append('--network_dim="' + str(job_input['network_dim']) + '"')
     args.append('--network_module=networks.lora')
     args.append('--network_train_unet_only')
     args.append('--no_half_vae')
     args.append('--noise_offset=0.1')
     args.append('--optimizer_type="' + job_input['optimizer_type'] + '"')
     args.append('--output_dir="./training/model"')
-    args.append('--output_name="' + job_input['output_name'] + '"')
+    args.append('--output_name="' + output_name + '"')
     args.append('--pretrained_model_name_or_path="/model_cache/sd_xl_base_1.0.safetensors"')
     args.append('--resolution="1024,1024"')
     args.append('--save_every_n_epochs="1"')
     args.append('--save_model_as=safetensors')
     args.append('--save_precision="' + job_input['save_precision'] + '"')
     args.append('--text_encoder_lr=5e-05')
-    args.append('--train_batch_size="' + job_input['train_batch_size'] + '"')
+    args.append('--train_batch_size="' + str(job_input['train_batch_size']) + '"')
     args.append('--train_data_dir="./training/img"')
-    args.append('--unet_lr="' + job_input['unet_lr'] + '"')
+    args.append('--unet_lr="' + str(job_input['unet_lr']) + '"')
     args.append('--xformers')
 
 #     --network_dim=16 --output_name="last" --lr_scheduler_num_cycles="2" --no_half_vae --learning_rate="4e-07" --lr_scheduler="constant" --train_batch_size="1" --max_train_steps="1000" --save_every_n_epochs="1" --mixed_precision="fp16" --save_precision="fp16" --cache_latents --optimizer_type="Adafactor" --max_data_loader_n_workers="0" --keep_tokens="20" --bucket_reso_steps=64 --xformers --bucket_no_upscale --noise_offset=0.1 --network_train_unet_only
