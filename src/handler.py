@@ -68,14 +68,34 @@ def handler(job):
     mc_args.append('--max_length="75"')
     mc_args.append('--min_length="8"')
     mc_args.append('--beam_search')
+    # mc_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
     mc_args.append('--caption_extension=".txt" ".' + flat_directory + '"')
-    mc_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
 
     make_captions_command = 'python3 ./finetune/make_captions.py ' + ' '.join(mc_args)
     
     if (runs_in_sd_scripts):
-        print(make_captions_command + " ALREADY in sd-scripts")
-        subprocess.run(make_captions_command, shell=True, check=True)
+        try:
+            print(make_captions_command + " ALREADY in sd-scripts")
+            subprocess.run(make_captions_command, shell=True, check=True)
+        except:
+            print("ERROR: " + make_captions_command + " in sd-scripts") 
+
+            mc2_args = []
+            mc2_args.append('--batch_size="1"')
+            mc2_args.append('--num_beams="1"')
+            mc2_args.append('--top_p="0.9"')
+            mc2_args.append('--max_length="75"')
+            mc2_args.append('--min_length="8"')
+            mc2_args.append('--beam_search')
+            mc2_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
+            mc2_args.append('--caption_extension=".txt" "' + flat_directory + '"')
+
+            print(" RETRYYY ALREADY in sd-scripts")
+            print(" RETRYYY ALREADY in sd-scripts")
+            print(" RETRYYY ALREADY in sd-scripts")
+
+            make_captions_command = 'python3 ./finetune/make_captions.py ' + ' '.join(mc2_args)
+
     else:
         print(make_captions_command + " in sd-scripts")
         subprocess.run(make_captions_command, shell=True, check=True,cwd='./sd-scripts')
