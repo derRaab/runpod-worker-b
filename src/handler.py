@@ -76,13 +76,14 @@ def handler(job):
 
     mc_args = []
     mc_args.append('--batch_size="1"')
-    mc_args.append('--num_beams="1"')
-    mc_args.append('--top_p="0.9"')
-    mc_args.append('--max_length="75"')
-    mc_args.append('--min_length="8"')
-    mc_args.append('--beam_search')
+    # mc_args.append('--num_beams="1"')
+    # mc_args.append('--top_p="0.9"')
+    # mc_args.append('--max_length="75"')
+    # mc_args.append('--min_length="8"')
+    # mc_args.append('--beam_search')
     # mc_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
-    mc_args.append('--caption_extension=".txt" ".' + flat_directory + '"')
+    mc_args.append('--caption_extension=".txt"')
+    mc_args.append('".' + flat_directory + '"')
 
     make_captions_command = 'python3 ./finetune/make_captions.py ' + ' '.join(mc_args)
     
@@ -95,13 +96,14 @@ def handler(job):
 
             mc2_args = []
             mc2_args.append('--batch_size="1"')
-            mc2_args.append('--num_beams="1"')
-            mc2_args.append('--top_p="0.9"')
-            mc2_args.append('--max_length="75"')
-            mc2_args.append('--min_length="8"')
-            mc2_args.append('--beam_search')
-            mc2_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
-            mc2_args.append('--caption_extension=".txt" "' + flat_directory + '"')
+            # mc2_args.append('--num_beams="1"')
+            # mc2_args.append('--top_p="0.9"')
+            # mc2_args.append('--max_length="75"')
+            # mc2_args.append('--min_length="8"')
+            # mc2_args.append('--beam_search')
+            # mc2_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
+            mc2_args.append('--caption_extension=".txt"')
+            mc2_args.append('"' + flat_directory + '"')
 
             try:
                 make_captions_command2 = 'python3 ./finetune/make_captions.py ' + ' '.join(mc2_args)
