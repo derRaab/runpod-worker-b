@@ -12,18 +12,26 @@ from runpod.serverless.utils import rp_download, upload_file_to_bucket
 
 from rp_schema import INPUT_SCHEMA
 
+print_json_output = []
+def print_json(data):
+    print_json_output.append(data)
+    print(data)
 
 def handler(job):
+
+    print_json("handler()")
+
 
     # Clear content directories from previous runs
     shutil.rmtree('./job_files', ignore_errors=True)
     shutil.rmtree('./training', ignore_errors=True)
 
+    print_json("removed old directories")
 
     # Ensure only allowed keys are present
     job_input = job['input']
     if 'errors' in (job_input := validate(job_input, INPUT_SCHEMA)):
-        return {'error': job_input['errors']}
+        return {'error': job_input['errors'], 'print_output': print_output}
     job_input = job_input['validated_input']
 
 
@@ -43,6 +51,8 @@ def handler(job):
     flat_directory = f"./training/img/{job_input['steps']}_{job_input['instance_name']} {job_input['class_name']}"
     os.makedirs(flat_directory, exist_ok=True)
 
+    print_json("flat_directory: " + flat_directory)
+
     for root, dirs, files in os.walk(downloaded_input['extracted_path']):
         # Skip __MACOSX folder
         if '__MACOSX' in root:
@@ -61,6 +71,9 @@ def handler(job):
     if 'sd-scripts' in cwd:
         runs_in_sd_scripts = True
 
+
+    print_json("runs_in_sd_scripts: " + str(runs_in_sd_scripts))
+
     mc_args = []
     mc_args.append('--batch_size="1"')
     mc_args.append('--num_beams="1"')
@@ -75,10 +88,10 @@ def handler(job):
     
     if (runs_in_sd_scripts):
         try:
-            print(make_captions_command + " ALREADY in sd-scripts")
+            print_json( 'RUNs already in sd-scripts: ' + make_captions_command)
             subprocess.run(make_captions_command, shell=True, check=True)
-        except:
-            print("ERROR: " + make_captions_command + " in sd-scripts") 
+        except BaseException as error:
+            print_json('An exception occurred: {}'.format(error))
 
             mc2_args = []
             mc2_args.append('--batch_size="1"')
@@ -90,20 +103,23 @@ def handler(job):
             mc2_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
             mc2_args.append('--caption_extension=".txt" "' + flat_directory + '"')
 
-            print(" RETRYYY ALREADY in sd-scripts")
-            print(" RETRYYY ALREADY in sd-scripts")
-            print(" RETRYYY ALREADY in sd-scripts")
-
-            make_captions_command = 'python3 ./finetune/make_captions.py ' + ' '.join(mc2_args)
-
+            try:
+                make_captions_command2 = 'python3 ./finetune/make_captions.py ' + ' '.join(mc2_args)
+                print_json( 'RETRY in sd-scripts with different directory path: ' + make_captions_command2)
+                subprocess.run(make_captions_command2, shell=True, check=True)
+            except BaseException as error:
+                print_json('An exception occurred: {}'.format(error))
     else:
-        print(make_captions_command + " in sd-scripts")
-        subprocess.run(make_captions_command, shell=True, check=True,cwd='./sd-scripts')
+        try:
+            print_json( 'RUN in ./sd-scripts' + make_captions_command)
+            subprocess.run(make_captions_command, shell=True, check=True,cwd='./sd-scripts')
+        except BaseException as error:
+            print_json('An exception occurred: {}'.format(error))
 
 
     # subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True,cwd='./sd-scripts')
     # print(mc_args)
-    #return {"error": "error"}
+    return {"print_json_output": print_json_output}
 
 
 
