@@ -86,8 +86,14 @@ def handler(job):
     mc_args.append('"' + flat_directory + '"')
 
     make_captions_command = 'python3 ./finetune/make_captions.py ' + ' '.join(mc_args)
-    subprocess.run(make_captions_command, shell=True, check=True)
-    
+    try:
+        subprocess.run(make_captions_command, shell=True, check=True)
+    except BaseException as e:
+        print_json("make_captions_command: " + make_captions_command)
+        print_json("make_captions_command failed: " + str(e))
+
+
+
     # subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True,cwd='./sd-scripts')
     # print(mc_args)
 
@@ -143,16 +149,25 @@ def handler(job):
 #     --network_dim=16 --output_name="last" --lr_scheduler_num_cycles="2" --no_half_vae --learning_rate="4e-07" --lr_scheduler="constant" --train_batch_size="1" --max_train_steps="1000" --save_every_n_epochs="1" --mixed_precision="fp16" --save_precision="fp16" --cache_latents --optimizer_type="Adafactor" --max_data_loader_n_workers="0" --keep_tokens="20" --bucket_reso_steps=64 --xformers --bucket_no_upscale --noise_offset=0.1 --network_train_unet_only
 
         # https://huggingface.co/docs/accelerate/package_reference/cli#accelerate-launch
-    subprocess.run(f"""accelerate launch {' '.join(args)}""", shell=True, check=True)
+    accelerate_launch_command = 'accelerate launch ' + ' '.join(args)
+    try:
+        subprocess.run(accelerate_launch_command, shell=True, check=True)
+    except BaseException as e:
+        print_json("accelerate_launch_command: " + accelerate_launch_command)
+        print_json("accelerate_launch_command failed: " + str(e))
 
-    job_s3_config = job.get('s3Config')
+    uploaded_lora_url = None
+    try:
+        job_s3_config = job.get('s3Config')
 
-    uploaded_lora_url = upload_file_to_bucket(
-        file_name=f"{job['id']}.safetensors",
-        file_location=f"./training/model/{job['id']}.safetensors",
-        bucket_creds=job_s3_config,
-        bucket_name=None if job_s3_config is None else job_s3_config['bucketName'],
-    )
+        uploaded_lora_url = upload_file_to_bucket(
+            file_name=f"{job['id']}.safetensors",
+            file_location=f"./training/model/{job['id']}.safetensors",
+            bucket_creds=job_s3_config,
+            bucket_name=None if job_s3_config is None else job_s3_config['bucketName'],
+        )
+    except BaseException as e:
+        print_json("upload_file_to_bucket failed: " + str(e))
 
     return {"lora": uploaded_lora_url, "print_json_output": print_json_output}
 
