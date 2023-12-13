@@ -5,17 +5,54 @@ Handler for the generation of a fine tuned lora model.
 import os
 import shutil
 import subprocess
+import time
 
 import runpod
 from runpod.serverless.utils.rp_validator import validate
 from runpod.serverless.utils import rp_download, upload_file_to_bucket
 
+from hurry.filesize import size
 from rp_schema import INPUT_SCHEMA
 
 print_json_output = []
 def print_json(data):
     print_json_output.append(data)
     print(data)
+
+def list_disk_usage(path, do_walk=False):
+    path_bytes = os.path.getsize(path)
+    path_size = size(path_bytes)
+    path_stat = shutil.disk_usage(path) 
+
+    list = []
+    list.append(path + " (" + path_size + ") USAGE total:" + size(path_stat.total) + " used:" + size(path_stat.used) + " free:" + size(path_stat.free) + ")")
+
+    if do_walk:
+        for root, dirs, files in os.walk(path):
+            for name in files:
+                name_path = os.path.join(root, name)
+                name_bytes = os.path.getsize(name_path)
+                name_size = size(name_bytes)
+                list.append(name_path + " (" + name_size + ")")
+
+            for name in dirs:
+                name_path = os.path.join(root, name)
+                name_bytes = os.path.getsize(name_path)
+                name_size = size(name_bytes)
+                list.append(name_path + " (" + name_size + ")")
+
+    return list
+
+
+
+def collect_disc_usage():
+    runpod_volume_usage = list_disk_usage(runpod_volume_path, True)
+    workspage_usage = [] # list_disk_usage(os.getcwd(), True)
+    files = runpod_volume_usage + workspage_usage
+    for file in files:
+        print(file)        
+    
+    return files
 
 def handler(job):
 
@@ -66,14 +103,6 @@ def handler(job):
                     flat_directory
                 )
 
-    runs_in_sd_scripts = False
-    cwd  = os.getcwd()
-    if 'sd-scripts' in cwd:
-        runs_in_sd_scripts = True
-
-
-    print_json("runs_in_sd_scripts: " + str(runs_in_sd_scripts))
-
     mc_args = []
     mc_args.append('--batch_size="1"')
     mc_args.append('--num_beams="1"')
@@ -81,24 +110,19 @@ def handler(job):
     mc_args.append('--max_length="75"')
     mc_args.append('--min_length="8"')
     mc_args.append('--beam_search')
-    mc_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
     mc_args.append('--caption_extension=".txt"')
     mc_args.append('"' + flat_directory + '"')
 
     make_captions_command = 'python3 ./finetune/make_captions.py ' + ' '.join(mc_args)
+    make_captions_command_start = time.time();
     try:
+        print_json("make_captions_command: " + make_captions_command)
         subprocess.run(make_captions_command, shell=True, check=True)
     except BaseException as e:
-        print_json("make_captions_command: " + make_captions_command)
         print_json("make_captions_command failed: " + str(e))
 
+    print_json("make_captions_command ran " + str(time.time() - make_captions_command_start) + " seconds")
 
-
-    # subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True,cwd='./sd-scripts')
-    # print(mc_args)
-
-
-    print_json( 'START training anyway')
 
     # Input with default values
     output_name = job_input.get('id', "a-traing-specific-name")
@@ -150,11 +174,17 @@ def handler(job):
 
         # https://huggingface.co/docs/accelerate/package_reference/cli#accelerate-launch
     accelerate_launch_command = 'accelerate launch ' + ' '.join(args)
+    accelerate_launch_command_start = time.time();
     try:
+        print_json("accelerate_launch_command: " + accelerate_launch_command)
+        accelerate_launch_command_start = time.time();
         subprocess.run(accelerate_launch_command, shell=True, check=True)
     except BaseException as e:
-        print_json("accelerate_launch_command: " + accelerate_launch_command)
         print_json("accelerate_launch_command failed: " + str(e))
+
+    print_json("accelerate_launch_command ran " + str(time.time() - accelerate_launch_command_start) + " seconds")
+
+    print_json(list_disk_usage('./training', True))
 
     uploaded_lora_url = None
     try:
@@ -162,7 +192,7 @@ def handler(job):
 
         uploaded_lora_url = upload_file_to_bucket(
             file_name=f"{job['id']}.safetensors",
-            file_location=f"./training/model/{job['id']}.safetensors",
+            file_location=f"./training/model/{output_name}.safetensors",
             bucket_creds=job_s3_config,
             bucket_name=None if job_s3_config is None else job_s3_config['bucketName'],
         )
