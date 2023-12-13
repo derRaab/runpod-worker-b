@@ -76,54 +76,23 @@ def handler(job):
 
     mc_args = []
     mc_args.append('--batch_size="1"')
-    # mc_args.append('--num_beams="1"')
-    # mc_args.append('--top_p="0.9"')
-    # mc_args.append('--max_length="75"')
-    # mc_args.append('--min_length="8"')
-    # mc_args.append('--beam_search')
-    # mc_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
+    mc_args.append('--num_beams="1"')
+    mc_args.append('--top_p="0.9"')
+    mc_args.append('--max_length="75"')
+    mc_args.append('--min_length="8"')
+    mc_args.append('--beam_search')
+    mc_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
     mc_args.append('--caption_extension=".txt"')
-    mc_args.append('".' + flat_directory + '"')
+    mc_args.append('"' + flat_directory + '"')
 
-    make_captions_command = 'accelerate launch ./finetune/make_captions.py ' + ' '.join(mc_args)
+    make_captions_command = 'python3 ./finetune/make_captions.py ' + ' '.join(mc_args)
+    subprocess.run(make_captions_command, shell=True, check=True)
     
-    if (runs_in_sd_scripts):
-        try:
-            print_json( 'RUNs already in sd-scripts: ' + make_captions_command)
-            subprocess.run(make_captions_command, shell=True, check=True)
-        except BaseException as error:
-            print_json('An exception occurred: {}'.format(error))
-
-            mc2_args = []
-            mc2_args.append('--batch_size="1"')
-            # mc2_args.append('--num_beams="1"')
-            # mc2_args.append('--top_p="0.9"')
-            # mc2_args.append('--max_length="75"')
-            # mc2_args.append('--min_length="8"')
-            # mc2_args.append('--beam_search')
-            # mc2_args.append('--caption_weights="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"')
-            mc2_args.append('--caption_extension=".txt"')
-            mc2_args.append('"' + flat_directory + '"')
-
-            try:
-                make_captions_command2 = 'accelerate launch ./finetune/make_captions.py ' + ' '.join(mc2_args)
-                print_json( 'RETRY in sd-scripts with different directory path: ' + make_captions_command2)
-                subprocess.run(make_captions_command2, shell=True, check=True)
-            except BaseException as error:
-                print_json('An exception occurred: {}'.format(error))
-    else:
-        try:
-            print_json( 'RUN in ./sd-scripts' + make_captions_command)
-            subprocess.run(make_captions_command, shell=True, check=True,cwd='./sd-scripts')
-        except BaseException as error:
-            print_json('An exception occurred: {}'.format(error))
-
-
     # subprocess.run('python ./finetune/make_captions.py ' + ' '.join(mc_args), shell=True, check=True,cwd='./sd-scripts')
     # print(mc_args)
-    return {"print_json_output": print_json_output}
 
 
+    print_json( 'START training anyway')
 
     # Input with default values
     output_name = job_input.get('id', "a-traing-specific-name")
@@ -185,7 +154,7 @@ def handler(job):
         bucket_name=None if job_s3_config is None else job_s3_config['bucketName'],
     )
 
-    return {"lora": uploaded_lora_url}
+    return {"lora": uploaded_lora_url, "print_json_output": print_json_output}
 
 
 runpod.serverless.start({"handler": handler})
