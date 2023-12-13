@@ -85,7 +85,7 @@ def handler(job):
     mc_args.append('--caption_extension=".txt"')
     mc_args.append('".' + flat_directory + '"')
 
-    make_captions_command = 'python3 ./finetune/make_captions.py ' + ' '.join(mc_args)
+    make_captions_command = 'accelerate launch ./finetune/make_captions.py ' + ' '.join(mc_args)
     
     if (runs_in_sd_scripts):
         try:
@@ -106,7 +106,7 @@ def handler(job):
             mc2_args.append('"' + flat_directory + '"')
 
             try:
-                make_captions_command2 = 'python3 ./finetune/make_captions.py ' + ' '.join(mc2_args)
+                make_captions_command2 = 'accelerate launch ./finetune/make_captions.py ' + ' '.join(mc2_args)
                 print_json( 'RETRY in sd-scripts with different directory path: ' + make_captions_command2)
                 subprocess.run(make_captions_command2, shell=True, check=True)
             except BaseException as error:
