@@ -44,16 +44,6 @@ def list_disk_usage(path, do_walk=False):
     return list
 
 
-
-def collect_disc_usage():
-    runpod_volume_usage = list_disk_usage(runpod_volume_path, True)
-    workspage_usage = [] # list_disk_usage(os.getcwd(), True)
-    files = runpod_volume_usage + workspage_usage
-    for file in files:
-        print(file)        
-    
-    return files
-
 def handler(job):
 
     print_json("handler()")
@@ -68,7 +58,7 @@ def handler(job):
     # Ensure only allowed keys are present
     job_input = job['input']
     if 'errors' in (job_input := validate(job_input, INPUT_SCHEMA)):
-        return {'error': job_input['errors'], 'print_output': print_output}
+        return {'error': job_input['errors'], 'print_json_output': print_json_output}
     job_input = job_input['validated_input']
 
 
@@ -89,6 +79,7 @@ def handler(job):
     os.makedirs(flat_directory, exist_ok=True)
 
     print_json("flat_directory: " + flat_directory)
+
 
     for root, dirs, files in os.walk(downloaded_input['extracted_path']):
         # Skip __MACOSX folder
@@ -123,6 +114,8 @@ def handler(job):
 
     print_json("make_captions_command ran " + str(time.time() - make_captions_command_start) + " seconds")
 
+    print_json("./training disk usage after BLIP:")
+    print_json(list_disk_usage("./training", True))
 
     # Input with default values
     output_name = job_input.get('id', "a-traing-specific-name")
@@ -184,7 +177,8 @@ def handler(job):
 
     print_json("accelerate_launch_command ran " + str(time.time() - accelerate_launch_command_start) + " seconds")
 
-    print_json(list_disk_usage('./training', True))
+    print_json("./training disk usage after TRAINING:")
+    print_json(list_disk_usage("./training", True))
 
     uploaded_lora_url = None
     try:
