@@ -33,3 +33,5 @@ wandb==0.15.0
 requests==2.31.0
 xformers==0.0.22.post7
 
+# Optional Python packages get listed here, one per line.
+hurry.filesize
