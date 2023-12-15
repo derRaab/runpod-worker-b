@@ -108,7 +108,14 @@ def handler(job):
     make_captions_command_start = time.time();
     try:
         print_json("make_captions_command: " + make_captions_command)
-        subprocess.run(make_captions_command, shell=True, check=True)
+        
+        # Fix the python path to include the current directory
+        env = os.environ.copy()
+        pythonpath = env.get("PYTHONPATH", "")
+        new_path = os.path.dirname(__file__)
+        env["PYTHONPATH"] = f"{new_path}:{pythonpath}"
+
+        subprocess.run(make_captions_command, shell=True, check=True, env=env)
     except BaseException as e:
         print_json("make_captions_command failed: " + str(e))
 
